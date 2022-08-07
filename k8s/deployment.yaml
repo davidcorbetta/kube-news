@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgree
+spec:
+  selector:
+    matchLabels:
+      app: postgree
+  template:
+    metadata:
+      labels:
+        app: postgree
+    spec:
+      containers:
+        - name: postgree
+          image: postgree:14.3
+          ports:
+            - containerPort: 5432
+          env:
+          - name: POSTGRES_USER
+            value: "kubenews"
+          - name: POSTGRES_PASSWORD
+            value: "Kube#123"
+          - name: POSTGRES_DB
+            value: "kubenews"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgree
+spec:
+  selector:
+    app: postgree
+  ports:
+  - port: 5432
+    targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubenews
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubenews
+  template:
+    metadata:
+      labels:
+        app: kubenews
+    spec:
+      containers:
+      - name: kubenews
+        image: fabricioveroni/kubenews:v2
+        env:
+        - name: DB_DATABASE 
+          value: "kubenews"
+        - name: DB_USERNAME 
+          value: "kubenews"
+        - name: DB_PASSWORD 
+          value: "Kube#123"
+        - name: DB_HOST 
+          value: "postgree"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-news
+spec:
+  selector:
+    app: kubenews
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30000
+  type: NodePort
